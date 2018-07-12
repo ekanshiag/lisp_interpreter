@@ -1,26 +1,16 @@
 'use strict'
-let add = (...args) => { return args.reduce((a, b) => a + b, 0) }
-let sub = (a, b) => a - b
-let mul = (...args) => { return args.reduce((a, b) => a * b, 1) }
-let div = (a, b) => a / b
-let greater = (a, b) => { return a > b }
-let less = (a, b) => { return a < b }
-let greaterEqual = (a, b) => { return a >= b }
-let lessEqual = (a, b) => { return a <= b }
-let equal = (a, b) => { return a === b }
-let abs = (...args) => { return args.map(Math.abs) }
 
 let env = {
-  '+': add,
-  '-': sub,
-  '*': mul,
-  '/': div,
-  '>': greater,
-  '<': less,
-  '>=': greaterEqual,
-  '<=': lessEqual,
-  '=': equal,
-  'abs': abs,
+  '+': (...args) => { return args.reduce((a, b) => a + b, 0) },
+  '-': (a, b) => b === undefined ? -a : a - b,
+  '*': (...args) => { return args.reduce((a, b) => a * b, 1) },
+  '/': (a, b) => a / b,
+  '>': (a, b) => a > b,
+  '<': (a, b) => a < b,
+  '>=': (a, b) => a >= b,
+  '<=': (a, b) => a <= b,
+  '=': (a, b) => a === b,
+  'abs': (...args) => { return args.map(Math.abs) },
   'append': (x, y) => x.concat(y),
   'apply': (proc, args) => proc(...args),
   'begin': (...args) => args.pop(),
@@ -41,11 +31,21 @@ let env = {
   },
   'eq?': (x, y) => x === y,
   'expt': Math.pow,
-  'equal?': equal,
+  'equal?': (a, b) => a === b,
   'length': (x) => x.length,
   'list': (...args) => args,
   'list?': x => Object.getPrototypeOf(x) === Array.prototype,
-  'map': (fn, arr) => arr.map(fn),
+  'map': (fn, ...arr) => {
+  	let mappedArr = []
+  	for (let i = 0; i < arr[0].length; i++) {
+  		let args = []
+  		for (let j = 0; j < arr.length; j++) {
+  			args.push(arr[j][i])
+  		}
+  		mappedArr.push(fn(...args))
+  	}
+  	return mappedArr
+  },
   'max': Math.max,
   'min': Math.min,
   'not': x => { if (!x) return true },
@@ -83,7 +83,7 @@ function parse (text) {
   if (text.startsWith('(')) {
     return parseList(text)
   } else {
-    let value = /^\d+(?:\.\d+)?/.exec(text)
+    let value = /^(?:\-)?\d+(?:\.\d+)?/.exec(text)
     if (value) {
       return [Number(value[0]), text.substring(value[0].length)]
     } else {
@@ -91,7 +91,7 @@ function parse (text) {
       if (value) {
         return [value[0], text.substring(value[0].length)]
       } else {
-        throw Error('Wrong syntax')
+      	throw Error('Wrong syntax')
       }
     }
   }

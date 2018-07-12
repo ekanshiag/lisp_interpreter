@@ -36,4 +36,5 @@ r
 ((compose sqrt *) 12 12)
 (map (lambda (n) (expt n n))
      (quote (1 2 3 4 5)))
-(define r 10
+(map + (quote (1 2 3)) (quote (1 2 3)))
+ (define r 10)
