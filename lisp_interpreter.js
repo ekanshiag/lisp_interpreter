@@ -7,7 +7,7 @@ let greater = (a, b) => { return a > b }
 let less = (a, b) => { return a < b }
 let greaterEqual = (a, b) => { return a >= b }
 let lessEqual = (a, b) => { return a <= b }
-let equal = (a, b) => { return a == b }
+let equal = (a, b) => { return a === b }
 let abs = (...args) => { return args.map(Math.abs) }
 
 let env = {
@@ -28,8 +28,8 @@ let env = {
   'cdr': (args) => args.slice(1),
   'cons': (x, y) => {
     let arr = [x]
-    if (Object.getPrototypeOf(y) == Array.prototype) {
-      if (y.length != 0) {
+    if (Object.getPrototypeOf(y) === Array.prototype) {
+      if (y.length !== 0) {
         for (let ele of y) {
           arr.push(ele)
         }
@@ -44,26 +44,26 @@ let env = {
   'equal?': equal,
   'length': (x) => x.length,
   'list': (...args) => args,
-  'list?': x => Object.getPrototypeOf(x) == Array.prototype,
+  'list?': x => Object.getPrototypeOf(x) === Array.prototype,
   'map': (fn, arr) => arr.map(fn),
   'max': Math.max,
   'min': Math.min,
-  'not': x => { if (!x) return T },
-  'null?': x => x == [],
-  'number?': x => Object.getPrototypeOf(x) == Number.prototype,
+  'not': x => { if (!x) return true },
+  'null?': x => x === [],
+  'number?': x => Object.getPrototypeOf(x) === Number.prototype,
   'pi': Math.PI,
   'pow': Math.pow,
   'print': console.log,
-  'procedure?': x => Object.getPrototypeOf(x) == Function.prototype,
+  'procedure?': x => Object.getPrototypeOf(x) === Function.prototype,
   'round': Math.round,
   'sqrt': Math.sqrt,
-  'symbol?': x => Object.getPrototypeOf(x) == String.prototype,
+  'symbol?': x => Object.getPrototypeOf(x) === String.prototype,
   'outer': null
 }
 
 function makeEnv (outerEnv, params, args) {
   let envObj = {}
-  if (Object.getPrototypeOf(params) == Array.prototype) {
+  if (Object.getPrototypeOf(params) === Array.prototype) {
     for (let i = 0; i < params.length; i++) {
       envObj[params[i]] = args[i]
     }
@@ -103,7 +103,6 @@ function parseList (text) {
   if (result) {
     text = text.substring(result[0].length)
   }
-  // let proc = text.split(' ')[0]
 
   while (!text.startsWith(')')) {
     result = parse(text)
@@ -115,45 +114,35 @@ function parseList (text) {
       text = text.substring(result[0].length)
     }
   }
-  /*
-	if(env.hasOwnProperty(proc)){
-		if(proc == 'quote' && parsedText.length != 2){
-			throw Error("Wrong syntax")
-		}else if((proc == 'set!' || proc == 'lambda' || proc == 'define') && parsedText.length != 3){
-			throw Error("Wrong syntax")
-		}else if(proc == 'if' && parsedText.length != 4){
-			throw Error("Wrong syntax")
-		}
-	}
-	*/
+
   text = text.split(' ').slice(1).join(' ')
   return [parsedText, text]
 }
 function evaluate (exp, en = env) {
-  if (Object.getPrototypeOf(exp) == String.prototype) {
+  if (Object.getPrototypeOf(exp) === String.prototype) {
     if (en.hasOwnProperty(exp)) {
       return en[exp]
     } else {
       return evaluate(exp, en['outer'])
     }
-  } else if (Object.getPrototypeOf(exp) == Number.prototype) {
+  } else if (Object.getPrototypeOf(exp) === Number.prototype) {
     return exp
-  } else if (exp[0] == 'quote') {
+  } else if (exp[0] === 'quote') {
     return exp[1]
-  } else if (exp[0] == 'if') {
+  } else if (exp[0] === 'if') {
     let [_, test, conseq, alt] = exp
     return evaluate(test, en) ? evaluate(conseq, en) : evaluate(alt, en)
-  } else if (exp[0] == 'define') {
+  } else if (exp[0] === 'define') {
     env[exp[1]] = evaluate(exp[2], en)
     return null
-  } else if (exp[0] == 'set!') {
+  } else if (exp[0] === 'set!') {
     if (en.hasOwnProperty(exp[1])) {
       en[exp[1]] = evaluate(exp[2], en)
       return null
     } else {
       return evaluate(exp, en['outer'])
     }
-  } else if (exp[0] == 'lambda') {
+  } else if (exp[0] === 'lambda') {
     return defineFunc(exp[1], exp[2], en)
   } else {
     let proc = evaluate(exp[0], en)
@@ -163,7 +152,7 @@ function evaluate (exp, en = env) {
 }
 
 function schemestr (exp) {
-  if (Object.getPrototypeOf(exp) == Array.prototype) {
+  if (Object.getPrototypeOf(exp) === Array.prototype) {
     return ('(' + exp.map(schemestr).join(' ') + ')')
   } else {
     return String(exp)
@@ -184,8 +173,8 @@ function repl () {
       throw Error('Wrong syntax')
     }
     let result = evaluate(parsed[0])
-    if (result != null) {
-      console.log(result)
+    if (result !== null) {
+      console.log(schemestr(result))
     }
     r1.prompt()
   })
@@ -203,7 +192,7 @@ function fileRead () {
     do {
       parsed = parse(text)
       let result = evaluate(parsed[0])
-      if (result != null) {
+      if (result !== null) {
         console.log(schemestr(result))
       }
       text = parsed[1].slice(1)
