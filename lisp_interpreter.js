@@ -79,9 +79,18 @@ function parse(text){
 	if(text.startsWith('(')){
 		return parseList(text)
 	}else{
-		let token = text.split(' ')[0]
-		let value = /^\d+(?:\.\d+)?$/.exec(token) != null ? Number(token) : token
-		return([value, text.substring(token.length)])
+		let value = /^\d+(?:\.\d+)?/.exec(text)
+		if(value){
+			return [Number(value[0]), text.substring(value[0].length)]
+		}else{
+			let value = /^\S+/.exec(text)
+			if(value){
+				return [value[0], text.substring(value[0].length)]
+			}else{
+				throw Error("Wrong syntax")
+			}
+		}
+		
 	}
 }
 function parseList(text){
@@ -92,13 +101,12 @@ function parseList(text){
 		text = text.substring(result[0].length)
 	}
 	let proc = text.split(' ')[0]
-	
 	while(!text.startsWith(')')){
 		result = parse(text)
 		parsedText.push(result[0])
 		text = result[1]
 		
-		result = /^(\s+)/.exec(text)
+		result = /^(\s+)|(\n)/.exec(text)
 		if(result){
 			text = text.substring(result[0].length)
 		}
@@ -148,6 +156,9 @@ function eval(exp, en = env){
 		return proc(...args)
 		}	
 }
+
+
+
 function repl(){
 	const readLine = require('readline')
 	const r1 = readLine.createInterface({
@@ -158,6 +169,7 @@ function repl(){
 
 	r1.prompt()
 	r1.on('line', (text) => {
+		
 		let parsed = parse(text.replace(/\)/g, ' ) ').replace(/\(/g, '( '))
 		if(parsed[1]){
 			throw Error("Wrong syntax")
@@ -168,5 +180,31 @@ function repl(){
 		}
 		r1.prompt()
 	})
+	
 }
-repl()
+//repl()
+
+
+function fileRead(){
+	let fs = require('fs')
+	fs.readFile('testData.txt', (err, text) => {
+		if(err){
+			throw err
+		}
+		let parsed
+		text = text.toString().replace(/\)/g, ' ) ').replace(/\(/g, '( ')
+		do{
+			parsed = parse(text)
+			let result = eval(parsed[0])
+			if(result != null){
+				console.log(result)
+			}
+			text = parsed[1].slice(1)
+			
+		}
+		while(text)
+
+	})
+}
+
+fileRead()
