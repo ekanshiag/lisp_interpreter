@@ -1,22 +1,74 @@
 'use strict'
+let equal = (x, y, z) => {
+  if (!y) throw Error('Too few arguments')
+  if (z) throw Error('Too many arguments')
+  return x === y
+}
 
 let env = {
   '+': (...args) => { return args.reduce((a, b) => a + b, 0) },
-  '-': (a, b) => b === undefined ? -a : a - b,
+  '-': (...args) => args.length == 1 ? -args : args.reduce((a, b) => a - b),
   '*': (...args) => { return args.reduce((a, b) => a * b, 1) },
-  '/': (a, b) => a / b,
-  '>': (a, b) => a > b,
-  '<': (a, b) => a < b,
-  '>=': (a, b) => a >= b,
-  '<=': (a, b) => a <= b,
-  '=': (a, b) => a === b,
-  'abs': (...args) => { return args.map(Math.abs) },
-  'append': (x, y) => x.concat(y),
+  '/': (...args) => args.length == 1 ? 1 / args : args.reduce((a, b) => a / b),
+  '>': (...args) => {
+  	if (args.length < 2) throw Error('Few arguments')
+  	for (let i = 0; i < args.length - 1; i++) {
+  		if (args[i] <= args[i + 1]) {
+  			return false
+  		}
+  	}
+  	return true
+  },
+  '<': (...args) => {
+  	if (args.length < 2) throw Error('Few arguments')
+  	for (let i = 0; i < args.length - 1; i++) {
+  		if (args[i] >= args[i + 1]) {
+  			return false
+  		}
+  	}
+  	return true
+  },
+  '>=': (...args) => {
+  	if (args.length < 2) throw Error('Few arguments')
+  	for (let i = 0; i < args.length - 1; i++) {
+  		if (args[i] < args[i + 1]) {
+  			return false
+  		}
+  	}
+  	return true
+  },
+  '<=': (...args) => {
+  	if (args.length < 2) throw Error('Few arguments')
+  	for (let i = 0; i < args.length - 1; i++) {
+  		if (args[i] > args[i + 1]) {
+  			return false
+  		}
+  	}
+  	return true
+  },
+  '=': (...args) => {
+  	if (args.length < 2) throw Error('Few arguments')
+  	for (let i = 0; i < args.length - 1; i++) {
+  		if (args[i] != args[i + 1]) {
+  			return false
+  		}
+  	}
+  	return true
+  },
+  'abs': (...args) => args.map(Math.abs),
+  'append': (x, y, ...z) => z === undefined ? x.concat(y) : x.concat(y).concat(...z),
   'apply': (proc, args) => proc(...args),
-  'begin': (...args) => args.pop(),
-  'car': (args) => args[0],
-  'cdr': (args) => args.slice(1),
-  'cons': (x, y) => {
+  'begin': (...args) => args.length === 0 ? ['begin'] : args.pop(),
+  'car': (...args) => {
+  	if (args.length > 1) throw Error('Too many arguments')
+  	return args[0][0]
+  },
+  'cdr': (...args) => {
+  	if (args.length > 1) throw Error('Too many arguments')
+  	return args[0].slice(1)
+  },
+  'cons': (x, y, z) => {
+  	if (z) throw Error('Too many arguments')
     let arr = [x]
     if (Object.getPrototypeOf(y) === Array.prototype) {
       if (y.length !== 0) {
@@ -29,13 +81,22 @@ let env = {
     }
     return arr
   },
-  'eq?': (x, y) => x === y,
-  'expt': Math.pow,
-  'equal?': (a, b) => a === b,
-  'length': (x) => x.length,
+  'eq?': equal,
+  'expt': (a, b, c) => {
+  	if (!b) throw Error('Too few arguments')
+    if (c) throw Error('Too many arguments')
+    return Math.pow(a, b)
+  },
+  'equal?': equal,
+  'length': (x, y) => {
+  	if (!x) throw Error('Too few arguments')
+  	if (y) throw Error('Too many arguments')
+  	return x.length
+  },
   'list': (...args) => args,
   'list?': x => Object.getPrototypeOf(x) === Array.prototype,
   'map': (fn, ...arr) => {
+  	if (arr.length === 0 || arr.some(x => Object.getPrototypeOf(x) !== Array.prototype)) throw Error('Wrong syntax')
   	let mappedArr = []
   	for (let i = 0; i < arr[0].length; i++) {
   		let args = []
@@ -46,17 +107,47 @@ let env = {
   	}
   	return mappedArr
   },
-  'max': Math.max,
-  'min': Math.min,
-  'not': x => { if (!x) return true },
-  'null?': x => x === [],
-  'number?': x => Object.getPrototypeOf(x) === Number.prototype,
+  'max': (x, y, ...z) => {
+  	if (!x || !y) throw Error('Too few arguments')
+  	return Math.max(x, y, ...z)
+  },
+  'min': (x, y, ...z) => {
+  	if (!x || !y) throw Error('Too few arguments')
+  	return Math.min(x, y, ...z)
+  },
+  'not': x => {
+    if (!x) return true
+    else return false
+  },
+  'null?': x => {
+    if (Object.getPrototypeOf(x) === Array.prototype && x.length === 0) return true
+    else return false
+  },
+  'number?': (x, y) => {
+    if (y) throw Error('Too many arguments')
+    return Object.getPrototypeOf(x) === Number.prototype
+  },
   'pi': Math.PI,
-  'pow': Math.pow,
-  'print': console.log,
-  'procedure?': x => Object.getPrototypeOf(x) === Function.prototype,
-  'round': Math.round,
-  'sqrt': Math.sqrt,
+  'print': (...args) => {
+    if (args.length === 0) throw Error('Too few arguments')
+  	for (let ele of args) {
+  		console.log(schemestr(ele))
+  	}
+  },
+  'procedure?': (x, y) => {
+  	if (y) throw Error('Too many arguments')
+  	return Object.getPrototypeOf(x) === Function.prototype
+  },
+  'round': (x, y) => {
+  	if (!x) throw Error('Too few arguments')
+  	if (y) throw Error('Too many arguments')
+  	return Math.round(x)
+  },
+  'sqrt': (x, y) => {
+  	if (!x) throw Error('Too few arguments')
+  	if (y) throw Error('Too many arguments')
+  	return Math.sqrt(x)
+  },
   'symbol?': x => Object.getPrototypeOf(x) === String.prototype,
   'outer': null
 }
@@ -119,6 +210,7 @@ function parseList (text) {
   return [parsedText, text]
 }
 function evaluate (exp, en = env) {
+  if (exp.length == 0) return []
   if (Object.getPrototypeOf(exp) === String.prototype) {
     if (en.hasOwnProperty(exp)) {
       return en[exp]
@@ -173,13 +265,13 @@ function repl () {
       throw Error('Wrong syntax')
     }
     let result = evaluate(parsed[0])
-    if (result !== null) {
+    if (result != null) {
       console.log(schemestr(result))
     }
     r1.prompt()
   })
 }
-// repl()
+repl()
 
 function fileRead () {
   let fs = require('fs')
@@ -201,4 +293,4 @@ function fileRead () {
   })
 }
 
-fileRead()
+// fileRead()
