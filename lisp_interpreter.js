@@ -109,7 +109,7 @@ function parseList (text) {
     parsedText.push(result[0])
     text = result[1]
 
-    result = /^(\s+)|(\n)/.exec(text)
+    result = /^(\s+)/.exec(text)
     if (result) {
       text = text.substring(result[0].length)
     }
@@ -195,7 +195,7 @@ function fileRead () {
       if (result !== null) {
         console.log(schemestr(result))
       }
-      text = parsed[1].slice(1)
+      text = parsed[1].slice(1).trim()
     }
     while (text)
   })
