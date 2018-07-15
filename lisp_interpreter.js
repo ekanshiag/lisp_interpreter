@@ -6,9 +6,9 @@ let equal = (x, y, z) => {
 }
 
 let env = {
-  '+': (...args) => { return args.reduce((a, b) => a + b, 0) },
+  '+': (...args) => args.reduce((a, b) => a + b, 0),
   '-': (...args) => args.length == 1 ? -args : args.reduce((a, b) => a - b),
-  '*': (...args) => { return args.reduce((a, b) => a * b, 1) },
+  '*': (...args) => args.reduce((a, b) => a * b, 1),
   '/': (...args) => args.length == 1 ? 1 / args : args.reduce((a, b) => a / b),
   '>': (...args) => {
   	if (args.length < 2) throw Error('Few arguments')
@@ -49,7 +49,7 @@ let env = {
   '=': (...args) => {
   	if (args.length < 2) throw Error('Few arguments')
   	for (let i = 0; i < args.length - 1; i++) {
-  		if (args[i] != args[i + 1]) {
+  		if (args[i] !== args[i + 1]) {
   			return false
   		}
   	}
@@ -149,6 +149,11 @@ let env = {
   	return Math.sqrt(x)
   },
   'symbol?': x => Object.getPrototypeOf(x) === String.prototype,
+  'if': '',
+  'define': '',
+  'quote': '',
+  'set!': '',
+  'lambda': '',
   'outer': null
 }
 
@@ -159,7 +164,7 @@ function makeEnv (outerEnv, params, args) {
       envObj[params[i]] = args[i]
     }
   } else {
-    envObj[params] = args
+    envObj[params] = arguments
   }
   envObj['outer'] = outerEnv
   return envObj
@@ -200,7 +205,7 @@ function parseList (text) {
     parsedText.push(result[0])
     text = result[1]
 
-    result = /^(\s+)/.exec(text)
+    result = /^\s+/.exec(text)
     if (result) {
       text = text.substring(result[0].length)
     }
@@ -214,8 +219,10 @@ function evaluate (exp, en = env) {
   if (Object.getPrototypeOf(exp) === String.prototype) {
     if (en.hasOwnProperty(exp)) {
       return en[exp]
-    } else {
+    } else if (en['outer'] !== null) {
       return evaluate(exp, en['outer'])
+    } else {
+    	throw Error('symbol not defined')
     }
   } else if (Object.getPrototypeOf(exp) === Number.prototype) {
     return exp
@@ -225,7 +232,10 @@ function evaluate (exp, en = env) {
     let [_, test, conseq, alt] = exp
     return evaluate(test, en) ? evaluate(conseq, en) : evaluate(alt, en)
   } else if (exp[0] === 'define') {
-    env[exp[1]] = evaluate(exp[2], en)
+  	if (env.hasOwnProperty(exp[1])) {
+  		throw Error('Symbol cannot be a keyword')
+  	}
+    en[exp[1]] = evaluate(exp[2], en)
     return null
   } else if (exp[0] === 'set!') {
     if (en.hasOwnProperty(exp[1])) {
@@ -260,7 +270,7 @@ function repl () {
 
   r1.prompt()
   r1.on('line', (text) => {
-    let parsed = parse(text.replace(/\)/g, ' ) ').replace(/\(/g, '( '))
+    let parsed = parse(text.trim().replace(/\)/g, ' ) ').replace(/\(/g, '( '))
     if (parsed[1]) {
       throw Error('Wrong syntax')
     }

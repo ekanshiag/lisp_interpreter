@@ -37,4 +37,4 @@ r
 (map (lambda (n) (expt n n))
      (quote (1 2 3 4 5)))
 (map + (quote (1 2 3)) (quote (1 2 3)))
- (define r 10)
+ (define r 10
