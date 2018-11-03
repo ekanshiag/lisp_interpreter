@@ -1,5 +1,5 @@
 # Lisp Interpreter
-Implementation of lisp in js
+Implementation of lispy calculator in js
 
 #### Usage
 ```js
