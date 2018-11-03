@@ -169,9 +169,11 @@ function makeEnv (outerEnv, params, args) {
   envObj['outer'] = outerEnv
   return envObj
 }
+
 function defineFunc (symbol, exp, outerEnv) {
   return (...args) => evaluate(exp, makeEnv(outerEnv, symbol, args))
 }
+
 function parse (text) {
   if (text.startsWith(')')) {
     throw Error('Wrong syntax')
@@ -192,6 +194,7 @@ function parse (text) {
     }
   }
 }
+
 function parseList (text) {
   let parsedText = []
   text = text.slice(1)
@@ -214,6 +217,7 @@ function parseList (text) {
   text = text.split(' ').slice(1).join(' ')
   return [parsedText, text]
 }
+
 function evaluate (exp, en = env) {
   if (exp.length === 0) return []
   if (Object.getPrototypeOf(exp) === String.prototype) {
@@ -260,47 +264,9 @@ function schemestr (exp) {
     return String(exp)
   }
 }
-function repl () {
-  const readLine = require('readline')
-  const r1 = readLine.createInterface({
-    input: process.stdin,
-    output: process.stdout,
-    prompt: 'lis.js>'
-  })
 
-  r1.prompt()
-  r1.on('line', (text) => {
-    let parsed = parse(text.trim().replace(/\)/g, ' ) ').replace(/\(/g, '( '))
-    if (parsed[1]) {
-      throw Error('Wrong syntax')
-    }
-    let result = evaluate(parsed[0])
-    if (result != null) {
-      console.log(schemestr(result))
-    }
-    r1.prompt()
-  })
+module.exports = {
+  parse,
+  evaluate,
+  schemestr
 }
-repl()
-
-function fileRead () {
-  let fs = require('fs')
-  fs.readFile('testData.txt', (err, text) => {
-    if (err) {
-      throw err
-    }
-    let parsed
-    text = text.toString().replace(/\)/g, ' ) ').replace(/\(/g, '( ')
-    do {
-      parsed = parse(text)
-      let result = evaluate(parsed[0])
-      if (result !== null) {
-        console.log(schemestr(result))
-      }
-      text = parsed[1].slice(1).trim()
-    }
-    while (text)
-  })
-}
-
-// fileRead()
